@@ -46,6 +46,8 @@ class _MyHomePageState extends State<MyHomePage> {
   bool pointerOnComputer = false;
   int maxRoundCount = 12;
   Color backgroundColor = Colors.white;
+  bool portrait = true;
+  late double height;
 
   void setPointerOnUser() {
     setState(() {
@@ -218,6 +220,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    portrait = MediaQuery.of(context).orientation == Orientation.portrait;
+    height = MediaQuery.of(context).size.height;
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
@@ -247,7 +251,7 @@ class _MyHomePageState extends State<MyHomePage> {
               height: 54,
             ),
             SizedBox(
-              height: MediaQuery.of(context).size.height * 0.3,
+              height: portrait ? height * 0.3 : height * 0.8,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -468,7 +472,6 @@ class GameButton extends StatelessWidget {
     }
     return Expanded(
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         children: [
           Visibility(
               visible: pointer,
@@ -476,7 +479,7 @@ class GameButton extends StatelessWidget {
               maintainSize: true,
               maintainState: true,
               child: const Pointer()),
-          body,
+          Expanded(child: body),
           const SizedBox(
             height: 18,
           ),
