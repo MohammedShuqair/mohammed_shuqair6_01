@@ -107,9 +107,9 @@ class _MyHomePageState extends State<MyHomePage> {
     colorEffect(winner);
   }
 
-  void diceMe() {
+  void diceMe(int value) {
     setState(() {
-      me = Random().nextInt(3);
+      me = value;
       roundNumber++;
     });
   }
@@ -218,6 +218,26 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  Future<void> resultAlgorithm(int value) async {
+    if (roundNumber < maxRoundCount) {
+      setPointerOnUser();
+      await Future.delayed(const Duration(milliseconds: 100));
+      diceMe(value);
+      await Future.delayed(const Duration(milliseconds: 100));
+      setPointerOnComputer();
+      await Future.delayed(const Duration(milliseconds: 300));
+      diceComputer();
+      await Future.delayed(const Duration(milliseconds: 300));
+      calWinner();
+      setPointerOnUser();
+      if (roundNumber == maxRoundCount) {
+        showSnackBar(context, "Calcolat result");
+        await Future.delayed(const Duration(seconds: 1));
+        showResult(context);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     portrait = MediaQuery.of(context).orientation == Orientation.portrait;
@@ -241,8 +261,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(hintText: "Defult 12"),
                 onChanged: (String value) {
+                  int temp = int.tryParse(value) ?? 12;
                   setState(() {
-                    maxRoundCount = int.tryParse(value) ?? 12;
+                    maxRoundCount = temp;
+                    if (roundNumber >= temp) {
+                      reset();
+                    }
                   });
                 },
               ),
@@ -257,26 +281,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 children: [
                   GameButton(
                     playerName: "YOU",
-                    onTap: () async {
-                      if (roundNumber <= maxRoundCount) {
-                        setPointerOnUser();
-                        await Future.delayed(const Duration(milliseconds: 100));
-                        diceMe();
-                        await Future.delayed(const Duration(milliseconds: 100));
-                        setPointerOnComputer();
-                        await Future.delayed(const Duration(milliseconds: 300));
-                        diceComputer();
-                        await Future.delayed(const Duration(milliseconds: 300));
-                        calWinner();
-
-                        setPointerOnUser();
-                        if (roundNumber == maxRoundCount) {
-                          showSnackBar(context, "Calcolat result");
-                          await Future.delayed(const Duration(seconds: 1));
-                          showResult(context);
-                        }
-                      }
-                    },
+                    onTap: () {},
                     random: me,
                     pointer: pointerOnUser,
                   ),
@@ -292,6 +297,48 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ],
               ),
+            ),
+            SizedBox(
+              height: 32,
+            ),
+            Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                        onPressed: () async {
+                          await resultAlgorithm(0);
+                        },
+                        icon: Image.asset(
+                          'assets/images/img0.png',
+                          width: 50,
+                          height: 50,
+                        )),
+                    SizedBox(
+                      width: 44,
+                    ),
+                    IconButton(
+                        onPressed: () async {
+                          await resultAlgorithm(1);
+                        },
+                        icon: Image.asset(
+                          'assets/images/img1.png',
+                          width: 50,
+                          height: 50,
+                        )),
+                  ],
+                ),
+                IconButton(
+                    onPressed: () async {
+                      await resultAlgorithm(2);
+                    },
+                    icon: Image.asset(
+                      'assets/images/img2.png',
+                      width: 50,
+                      height: 50,
+                    )),
+              ],
             ),
             const SizedBox(
               height: 18,
