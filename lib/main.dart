@@ -1,6 +1,9 @@
 import 'dart:math';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+
+import 'animation/fade.dart';
 
 void main() {
   runApp(const MyApp());
@@ -48,6 +51,9 @@ class _MyHomePageState extends State<MyHomePage> {
   Color backgroundColor = Colors.white;
   bool portrait = true;
   late double height;
+  bool isPlay = false;
+  Duration duration = const Duration(milliseconds: 500);
+  AudioPlayer audioPlayer = AudioPlayer();
 
   void setPointerOnUser() {
     setState(() {
@@ -220,15 +226,26 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> resultAlgorithm(int value) async {
     if (roundNumber < maxRoundCount) {
+      audioPlayer.play(AssetSource('sound/spin.mp3'));
       setPointerOnUser();
+      setState(() {
+        isPlay = true;
+      });
       await Future.delayed(const Duration(milliseconds: 100));
       diceMe(value);
+
       await Future.delayed(const Duration(milliseconds: 100));
+
       setPointerOnComputer();
       await Future.delayed(const Duration(milliseconds: 300));
       diceComputer();
+      setState(() {
+        isPlay = false;
+      });
       await Future.delayed(const Duration(milliseconds: 300));
       calWinner();
+      audioPlayer.play(AssetSource('sound/done.mp3'));
+
       setPointerOnUser();
       if (roundNumber == maxRoundCount) {
         showSnackBar(context, "Calcolat result");
@@ -274,31 +291,51 @@ class _MyHomePageState extends State<MyHomePage> {
             const SizedBox(
               height: 54,
             ),
+            AnimatedOpacity(
+              opacity: isPlay ? 1 : 0,
+              duration: duration,
+              child: AnimatedScale(
+                scale: isPlay ? 1 : 0,
+                duration: duration,
+                child: AnimatedRotation(
+                    turns: isPlay ? 1 : 0,
+                    duration: duration,
+                    child: const ThreeCircles()),
+              ),
+            ),
             SizedBox(
               height: portrait ? height * 0.3 : height * 0.8,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  GameButton(
-                    playerName: "YOU",
-                    onTap: () {},
-                    random: me,
-                    pointer: pointerOnUser,
+                  AnimatedScale(
+                    scale: isPlay ? 0 : 1,
+                    duration: const Duration(milliseconds: 500),
+                    child: GameButton(
+                      playerName: "YOU",
+                      onTap: () {},
+                      random: me,
+                      pointer: pointerOnUser,
+                    ),
                   ),
                   const Text(
                     "VS",
                     style: TextStyle(fontSize: 22),
                   ),
-                  GameButton(
-                    playerName: "Computer",
-                    isRotate: true,
-                    random: computer,
-                    pointer: pointerOnComputer,
+                  AnimatedScale(
+                    scale: isPlay ? 0 : 1,
+                    duration: duration,
+                    child: GameButton(
+                      playerName: "Computer",
+                      isRotate: true,
+                      random: computer,
+                      pointer: pointerOnComputer,
+                    ),
                   ),
                 ],
               ),
             ),
-            SizedBox(
+            const SizedBox(
               height: 32,
             ),
             Column(
@@ -315,7 +352,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           width: 50,
                           height: 50,
                         )),
-                    SizedBox(
+                    const SizedBox(
                       width: 44,
                     ),
                     IconButton(
@@ -393,6 +430,43 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       backgroundColor = Colors.white;
     });
+  }
+}
+
+class ThreeCircles extends StatelessWidget {
+  const ThreeCircles({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      children: [
+        CircleAvatar(
+          radius: 12,
+          backgroundColor: Colors.red,
+        ),
+        SizedBox(
+          height: 8,
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircleAvatar(
+              radius: 12,
+              backgroundColor: Colors.blue,
+            ),
+            SizedBox(
+              width: 16,
+            ),
+            CircleAvatar(
+              radius: 12,
+              backgroundColor: Colors.green,
+            ),
+          ],
+        )
+      ],
+    );
   }
 }
 
@@ -490,24 +564,27 @@ class GameButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget body = TextButton(
-      onPressed: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          border: pointer
-              ? Border.all(
-                  color: Colors.black,
-                  strokeAlign: BorderSide.strokeAlignOutside,
-                  width: 4,
-                )
-              : null,
-          shape: BoxShape.circle,
-        ),
-        child: Image.asset(
-          'assets/images/img$random.png',
-          fit: BoxFit.cover,
-        ),
+    Widget body = Container(
+      constraints: const BoxConstraints(
+        maxHeight: 150,
+        maxWidth: 150,
+        minHeight: 100,
+        minWidth: 100,
+      ),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        border: pointer
+            ? Border.all(
+                color: Colors.black,
+                strokeAlign: BorderSide.strokeAlignOutside,
+                width: 4,
+              )
+            : null,
+        shape: BoxShape.circle,
+      ),
+      child: Image.asset(
+        'assets/images/img$random.png',
+        fit: BoxFit.cover,
       ),
     );
     if (isRotate) {
@@ -517,32 +594,27 @@ class GameButton extends StatelessWidget {
         child: body,
       );
     }
-    return Expanded(
-      child: Column(
-        children: [
-          Visibility(
-              visible: pointer,
-              maintainAnimation: true,
-              maintainSize: true,
-              maintainState: true,
-              child: const Pointer()),
-          Expanded(child: body),
-          const SizedBox(
-            height: 18,
-          ),
-          Text(
-            playerName,
-            style: TextStyle(
-                fontSize: 20,
-                shadows: pointer
-                    ? [
-                        const BoxShadow(
-                            color: Colors.blue, offset: Offset(0, 3))
-                      ]
-                    : null),
-          ),
-        ],
-      ),
+    return Column(
+      children: [
+        Visibility(
+            visible: pointer,
+            maintainAnimation: true,
+            maintainSize: true,
+            maintainState: true,
+            child: const Pointer()),
+        body,
+        const SizedBox(
+          height: 18,
+        ),
+        Text(
+          playerName,
+          style: TextStyle(
+              fontSize: 20,
+              shadows: pointer
+                  ? [const BoxShadow(color: Colors.blue, offset: Offset(0, 3))]
+                  : null),
+        ),
+      ],
     );
   }
 }
